@@ -9,8 +9,10 @@
 
   <p>Lorem ipsum sit dolor amet.</p>
 
-  <pre>
-    {{ dump_user_data }}
-  </pre>
+    <form action="/response" method="POST">
+        <label for="user_input">Message:</label>
+        <input type="text" id="user_input" name="user_input" required>
+        <button type="submit">Send</button>
+	</form>
 
 {% endblock %}
