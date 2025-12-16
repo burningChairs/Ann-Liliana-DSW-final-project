@@ -5,10 +5,10 @@ from bson.objectid import ObjectId
 
 import pprint
 import os
-import time
 import random
 import pymongo
 import sys
+import datetime
  
 app = Flask(__name__)
 
@@ -44,6 +44,32 @@ try:
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
+    
+def get_minute_specific_number(lower_bound, upper_bound):
+    """
+    Generates a consistent number for the current minute using the minute 
+    of the hour as the random seed.
+    """
+    # 1. Get the current time.
+    now = datetime.datetime.now()
+    
+    # 2. Extract the current minute (an integer between 0 and 59).
+    current_minute = now.minute
+    
+    # 3. Use the minute as the seed for the random number generator.
+    # Seeding ensures the number generated is the same for the entire minute.
+    random.seed(current_minute)
+    
+    # 4. Generate the "random" number within the specified range.
+    # Use randint for inclusive range.
+    result = random.randint(lower_bound, upper_bound)
+    
+    return result
+
+# Generate a number between 1 and 100 that is the same for the current minute.
+number = get_minute_specific_number(1, 100)
+print(f"The consistent number for this minute is: {number}")
+
 
 #context processors run before templates are rendered and add variable(s) to the template's context
 #context processors must return a dictionary 
