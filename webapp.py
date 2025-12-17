@@ -113,16 +113,18 @@ def authorized():
 
 @app.route('/page1')
 def renderPage1():
-    if 'user_data' in session:
-        user_data_pprint = pprint.pformat(session['user_data'])#format the user data nicely
-    else:
-        user_data_pprint = '';
-    return render_template('page1.html',dump_user_data=user_data_pprint)
+    return render_template('page1.html')
 
 @app.route('/page2')
 def renderPage2():
     return render_template('page2.html')
-
+ 
+@app.route('/update_p')
+def update():
+    return Markup("<p>This text came from the server.</p>")
+    
+    
+    
 #the tokengetter is automatically called to check who is logged in.
 @github.tokengetter
 def get_github_oauth_token():

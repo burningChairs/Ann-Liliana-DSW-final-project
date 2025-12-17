@@ -6,13 +6,23 @@
 
 {% block content %}
   <h1>This is Page 1</h1>
-
-  <p>Lorem ipsum sit dolor amet.</p>
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  
+  <script>
+      $(document).ready(function(){
+          $("button").click(function(){
+              $("#hello").load("/update_p");
+          });
+      });
+  </script>
 
     <form action="/response" method="POST">
         <label for="user_input">Message:</label>
         <input type="text" id="user_input" name="user_input" required>
         <button type="submit">Send</button>
 	</form>
+	
+	<p id="hello">hello</p>
 
 {% endblock %}
