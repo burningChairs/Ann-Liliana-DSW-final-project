@@ -54,20 +54,20 @@ def renderPage1():
 		session['game_message'] = 'pick a random integer from 0 to 00, you have 6 guesses.'
 		
 		if request.method == 'POST':
-		try:
-			user_guess = int(request.form.get('user_input'))
-		except ValueError:
-			session['game_message'] = 'Invalid input. Try again'
-			return render_template('game.html', message=session['game_message'], history=session['guess_history'], guesses_left=6 - session['guesses_made'])
+		    try:
+			    user_guess = int(request.form.get('user_input'))
+		    except ValueError:
+			    session['game_message'] = 'Invalid input. Try again'
+			    return render_template('game.html', message=session['game_message'], history=session['guess_history'], guesses_left=6 - session['guesses_made'])
 
 		session['guesses_made'] +=1
 		guesses_left = 6 - session['guesses_made']
 		
 		if user_guess == session['secret_number']:
-			session['game_message'] = f**CORRECT!** The number was {session["secret_number"]}. Game over'
+			session['game_message'] = f**CORRECT** The number was {session["secret_number"]}. Game over
 
 		elif session['guesses_made'] >= 6:
-			session['game_message'] = f**GAME OVER** The number was {session["secret_number"]}. Game over'
+			session['game_message'] = f**GAME OVER** The number was {session["secret_number"]}. Game over
 #def get_minute_specific_number(lower_bound, upper_bound):
     #"""
     #Generates a consistent number for the current minute using the minute 

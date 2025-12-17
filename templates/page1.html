@@ -32,8 +32,15 @@
   
   <hr>
   
+  <p> Users History </p>
   {% if history %}
-  
+    <ul>
+      {% for entry in history | reverse %}
+        <li>{{ entry | safe }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p>No guesses yet</p>
   {endif}
     <!-- ><form action="/response" method="POST">
         <label for="user_input">Message:</label>
