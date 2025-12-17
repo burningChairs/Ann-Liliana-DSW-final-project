@@ -1,1 +1,29 @@
+h4#example1 {
+    font-size: 15px;
+    background-color: #fc796f;
+    border: 4px solid #fc1d0d;
+    margin-top: 3em;
+    padding: 1em;
+    text-align: center;
+    width: 30%;
+}
 
+h4#example2 {
+    font-size: 15px;
+    background-color: #fcf5a4;
+    border: 4px solid #fae60a;
+    margin-top: 3em;
+    padding: 1em;
+    text-align: center;
+    width: 30%;
+}
+
+h4#example3 {
+    font-size: 15px;
+    background-color: #a8faa5;
+    border: 4px solid #12d90b;
+    margin-top: 3em;
+    padding: 1em;
+    text-align: center;
+    width: 30%;
+}
