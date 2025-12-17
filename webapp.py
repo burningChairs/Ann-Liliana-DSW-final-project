@@ -64,10 +64,10 @@ def renderPage1():
 		guesses_left = 6 - session['guesses_made']
 		
 		if user_guess == session['secret_number']:
-			session['game_message'] = f**CORRECT** The number was {session["secret_number"]}. Game over
+			session['game_message'] = f"CORRECT The number was {session["secret_number"]}. Game over"
 
 		elif session['guesses_made'] >= 6:
-			session['game_message'] = f**GAME OVER** The number was {session["secret_number"]}. Game over
+			session['game_message'] = f"GAME OVER The number was {session["secret_number"]}. Game over"
 #def get_minute_specific_number(lower_bound, upper_bound):
     #"""
     #Generates a consistent number for the current minute using the minute 
