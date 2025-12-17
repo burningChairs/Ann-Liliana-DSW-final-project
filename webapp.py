@@ -45,30 +45,53 @@ try:
 except Exception as e:
     print(e)
     
-def get_minute_specific_number(lower_bound, upper_bound):
-    """
-    Generates a consistent number for the current minute using the minute 
-    of the hour as the random seed.
-    """
+@app.route('/page1', methods=['GET', 'POST'])
+def renderPage1():
+	if'secret_number' not in session:
+		session['secret_number'] = random.randint(0, 99)
+		session['guess_made'] = 0
+		session['guess_history'] = []
+		session['game_message'] = 'pick a random integer from 0 to 00, you have 6 guesses.'
+		
+		if request.method == 'POST':
+		try:
+			user_guess = int(request.form.get('user_input'))
+		except ValueError:
+			session['game_message'] = 'Invalid input. Try again'
+			return render_template('game.html', message=session['game_message'], history=session['guess_history'], guesses_left=6 - session['guesses_made'])
+
+		session['guesses_made'] +=1
+		guesses_left = 6 - session['guesses_made']
+		
+		if user_guess == session['secret_number']:
+			session['game_message'] = f**CORRECT!** The number was {session["secret_number"]}. Game over'
+
+		elif session['guesses_made'] >= 6:
+			session['game_message'] = f**GAME OVER** The number was {session["secret_number"]}. Game over'
+#def get_minute_specific_number(lower_bound, upper_bound):
+    #"""
+    #Generates a consistent number for the current minute using the minute 
+    #of the hour as the random seed.
+    #"""
     # 1. Get the current time.
-    now = datetime.datetime.now()
+    #now = datetime.datetime.now()
     
     # 2. Extract the current minute (an integer between 0 and 59).
-    current_minute = now.minute
+    #current_minute = now.minute
     
     # 3. Use the minute as the seed for the random number generator.
     # Seeding ensures the number generated is the same for the entire minute.
-    random.seed(current_minute)
+    #random.seed(current_minute)
     
     # 4. Generate the "random" number within the specified range.
     # Use randint for inclusive range.
-    result = random.randint(lower_bound, upper_bound)
+    #result = random.randint(lower_bound, upper_bound)
     
-    return result
+    #return result
 
-# Generate a number between 1 and 100 that is the same for the current minute.
-number = get_minute_specific_number(1, 100)
-print(f"The consistent number for this minute is: {number}")
+## Generate a number between 1 and 100 that is the same for the current minute.
+#number = get_minute_specific_number(1, 100)
+#print(f"The consistent number for this minute is: {number}")
 
 
 #context processors run before templates are rendered and add variable(s) to the template's context
