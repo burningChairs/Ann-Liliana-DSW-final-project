@@ -17,7 +17,12 @@
       });
   </script>
 
-  <p>**</p>
+  <p>**{{ message | safe }}**{% if guesses_left is defines and guesses_left > 0 %}
+	You have **{{ guesses_left }}** guesses left.
+	{% endif %}
+  </p>
+  
+  {% if message%}
     <!-- ><form action="/response" method="POST">
         <label for="user_input">Message:</label>
         <input type="text" id="user_input" name="user_input" required>
