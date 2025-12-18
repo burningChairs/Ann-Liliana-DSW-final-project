@@ -47,27 +47,50 @@ except Exception as e:
     
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
-	if'secret_number' not in session:
+	if 'secret_number' not in session:
 		session['secret_number'] = random.randint(0, 99)
-		session['guess_made'] = 0
+		session['guesses_made'] = 0
 		session['guess_history'] = []
 		session['game_message'] = 'pick a random integer from 0 to 00, you have 6 guesses.'
 		
-		if request.method == 'POST':
-		    try:
-			    user_guess = int(request.form.get('user_input'))
-		    except ValueError:
-			    session['game_message'] = 'Invalid input. Try again'
-			    return render_template('game.html', message=session['game_message'], history=session['guess_history'], guesses_left=6 - session['guesses_made'])
+	message = session.get('game_message', '')
+	history = session.get('guess_history', [])
+	guesses_made = session.get('guesses_made', 0)
+	guesses_left = 6 - guesses_made
+	
+	if request.method == 'POST' and guesses_left > 0:
+		try:
+			user_guess = int(request.form.get('user_input'))
+		except (TypeError, ValueError):
+			session['game_message'] = 'Invalid input. Try again'
+			message = session['game_message']
+			return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
 
-		session['guesses_made'] +=1
-		guesses_left = 6 - session['guesses_made']
+		guesses_made += 1
+		session['guesses_made'] = guesses_made
+		guesses_left = 6 - guesses_made
 		
-		if user_guess == session['secret_number']:
-			session['game_message'] = f"CORRECT The number was {session["secret_number"]}. Game over"
-
-		elif session['guesses_made'] >= 6:
-			session['game_message'] = f"GAME OVER The number was {session["secret_number"]}. Game over"
+		secret_number = session['secret_number']
+		history.append(f'You guessed {user_guess}')
+		session['guess_history'] = history
+		
+		if user_guess == secret_number:
+			session['game_message'] = f'CORRECT The number was {secret_number}. Game over'
+		
+		elif guesses_made >= 6:
+			session['game_message'] = f'GAME OVER The number was {secret_number}. Game over'
+		
+		#for now till we can change it to color variation rather that too close or too high
+		elif user_guess < secret_number:
+			session['game_message'] = 'Too low'
+			
+		else:
+			session['game_message'] = 'Too high'
+		
+		message = session['game_message']
+		
+	return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
+		
 #def get_minute_specific_number(lower_bound, upper_bound):
     #"""
     #Generates a consistent number for the current minute using the minute 
@@ -134,9 +157,9 @@ def authorized():
     return render_template('message.html', message=message)
 
 
-@app.route('/page1')
-def renderPage1():
-    return render_template('page1.html')
+#@app.route('/page1')
+#def renderPage1():
+#    return render_template('page1.html')
 
 @app.route('/page2')
 def renderPage2():

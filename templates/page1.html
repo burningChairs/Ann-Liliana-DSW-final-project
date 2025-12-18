@@ -17,12 +17,14 @@
       });
   </script>
 
-  <p>**{{ message | safe }}**{% if guesses_left is defines and guesses_left > 0 %}
-	You have **{{ guesses_left }}** guesses left.
+  <p>
+    <strong>{{ message | safe }}</strong>
+    {% if guesses_left is defined and guesses_left > 0 %}
+	  You have <strong>{{ guesses_left }}</strong> guesses left.
 	{% endif %}
   </p>
   
-  {% if'CORRECT' not in message and 'GAME OVER' not in message %}
+  {% if 'CORRECT' not in message and 'GAME OVER' not in message %}
     <form action="/page1" method="POST">
       <label for="user_input">Enter your guess (0 to 99):</label>
       <input type="number" id="user_input" name="user_input" min="0" max="99" required autofocus>
@@ -41,7 +43,7 @@
     </ul>
     {% else %}
       <p>No guesses yet</p>
-  {endif}
+  {% endif %}
     <!-- ><form action="/response" method="POST">
         <label for="user_input">Message:</label>
         <input type="text" id="user_input" name="user_input" required>
