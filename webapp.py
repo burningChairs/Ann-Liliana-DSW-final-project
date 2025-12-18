@@ -51,7 +51,7 @@ def renderPage1():
 		session['secret_number'] = random.randint(0, 99)
 		session['guesses_made'] = 0
 		session['guess_history'] = []
-		session['game_message'] = 'pick a random integer from 0 to 00, you have 6 guesses.'
+		session['game_message'] = 'Pick a random number from 0 to 99, you have 6 guesses.'
 		
 	message = session.get('game_message', '')
 	history = session.get('guess_history', [])
