@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for, session, request, jsonify, render_te
 from markupsafe import Markup
 from flask_oauthlib.client import OAuth
 from bson.objectid import ObjectId
+from datetime import datetime, timedelta
 
 import pprint
 import os
@@ -45,6 +46,20 @@ try:
 except Exception as e:
     print(e)
     
+@app.route('/api/can_play')
+def can_play():
+    if not ('github_token' in session):
+        return jsonify({'can_play': False, 'reason': 'not_logged_in'})
+    user_id = session['user_data']['id']
+    user_doc = collection.find_one({'user_id': user_id})
+    now = datetime.utcnow()
+    if user_doc and 'last_play' in user_doc:
+        last_play = datetime.fromisoformat(user_doc['last_play'])
+        if now < last_play + timedelta(minutes=5):
+            time_left = (last_play + timedelta(minutes=5) - now).seconds #5 minutes for now
+            return jsonify({'can_play': False, 'reason': 'cooldown', 'seconds_left': time_left})
+    return jsonify({'can_play': True})
+
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
 	if 'secret_number' not in session:

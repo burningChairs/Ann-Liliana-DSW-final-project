@@ -1,3 +1,11 @@
+#game_message { 
+    font-weight: bold;
+}
+input:disabled, button:disabled {
+    opacity: 0,5;
+    cursor: not-allowed;
+}
+
 h4#example1 {
     font-size: 15px;
     background-color: #fc796f;
