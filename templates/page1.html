@@ -18,7 +18,7 @@
       });
   </script>
 -->
-  <p>
+  <p id="game_message">
     <strong>{{ message | safe }}</strong>
     {% if guesses_left is defined and guesses_left > 0 %}
 	  You have <strong>{{ guesses_left }}</strong> guesses left.
