@@ -47,7 +47,7 @@ except Exception as e:
     
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
-	if'secret_number' not in session:
+	if 'secret_number' not in session:
 		session['secret_number'] = random.randint(0, 99)
 		session['guess_made'] = 0
 		session['guess_history'] = []
@@ -68,6 +68,7 @@ def renderPage1():
 
 		elif session['guesses_made'] >= 6:
 			session['game_message'] = f"GAME OVER The number was {session["secret_number"]}. Game over"
+			
 #def get_minute_specific_number(lower_bound, upper_bound):
     #"""
     #Generates a consistent number for the current minute using the minute 
@@ -121,25 +122,99 @@ def authorized():
     resp = github.authorized_response()
     if resp is None:
         session.clear()
-        flash('Access denied: reason=' + request.args['error'] + ' error=' + request.args['error_description'] + ' full=' + pprint.pformat(request.args), 'error')      
-    else:
-        try:
-            session['github_token'] = (resp['access_token'], '') #save the token to prove that the user logged in
-            session['user_data']=github.get('user').data
-            message = 'You were successfully logged in as ' + session['user_data']['login'] + '.'
-        except Exception as inst:
-            session.clear()
-            print(inst)
-            message = 'Unable to login, please try again.', 'error'
+        flash(
+            'Access denied: reason=' + request.args['error'] +
+            ' error=' + request.args['error_description'] +
+            ' full=' + pprint.pformat(request.args),
+            'error'
+        )
+        return redirect(url_for('home'))
+    try:
+        session['github_token'] = (resp['access_token'], '')
+        session['user_data'] = github.get('user').data
+        user = session['user_data']
+
+        github_id = user['id']
+        username = user['login']
+        avatar_url = user.get('avatar_url')
+        html_url = user.get('html_url')
+        email = user.get('email')
+        now = datetime.datetime.now(datetime.UTC)
+
+        existing = collection.find_one({"github_id": github_id})
+
+        if existing:
+            last_login = existing.get("last_login")
+            current_streak = existing.get("current_streak", 0)
+            longest_streak = existing.get("longest_streak", 0)
+
+            if last_login is not None:
+                delta_days = (now.date() - last_login.date()).days
+                if delta_days == 1:
+                    current_streak += 1
+                elif delta_days == 0:
+                    pass
+                else:
+                    current_streak = 1
+            else:
+                current_streak = 1
+
+            if current_streak > longest_streak:
+                longest_streak = current_streak
+
+            collection.update_one(
+                {"github_id": github_id},
+                {
+                    "$set": {
+                        "username": username,
+                        "avatar_url": avatar_url,
+                        "html_url": html_url,
+                        "email": email,
+                        "last_login": now,
+                        "current_streak": current_streak,
+                        "longest_streak": longest_streak,
+                    }
+                }
+            )
+        else:
+            current_streak = 1
+            longest_streak = 1
+            collection.insert_one(
+                {
+                    "github_id": github_id,
+                    "username": username,
+                    "avatar_url": avatar_url,
+                    "html_url": html_url,
+                    "email": email,
+                    "last_login": now,
+                    "current_streak": current_streak,
+                    "longest_streak": longest_streak,
+                }
+            )
+        message = 'You were successfully logged in as ' + username + '.'
+    except Exception as inst:
+        session.clear()
+        print(inst)
+        message = 'Unable to login, please try again.'
     return render_template('message.html', message=message)
 
-
-@app.route('/page1')
-def renderPage1():
-    return render_template('page1.html')
+# @app.route('/page1')
+# def renderPage1():
+#     return render_template('page1.html')
 
 @app.route('/page2')
 def renderPage2():
+    if 'user_data' not in session:
+        return redirect(url_for('home'))
+    
+    github_id = session['user_data']['id']
+    user = collection.find_one({"github_id": github_id})
+    
+    if not user:
+        flash("No user record found.")
+        return redirect(url_for('home'))
+    
+    return render_template('page2.html', user=user)
     return render_template('page2.html')
  
 @app.route('/update_p')
