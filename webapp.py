@@ -196,7 +196,18 @@ def authorized():
         session.clear()
         print(inst)
         message = 'Unable to login, please try again.'
-    return render_template('message.html', message=message)
+        
+        
+    if 'github_token' not in session:
+        return redirect(url_for('home'))
+    username = session['user_data']['username']
+    user_posts = list(collection.find({"username": username}))
+    
+    userstuff = list(collection.find().sort("_id", -1))
+    for userinfo in userstuff:
+        userinfo['_id'] = str(userinfo['_id'])
+    
+    return render_template('message.html', message=message, userstuff=userstuff, username=username)
 
 # @app.route('/page1')
 # def renderPage1():
