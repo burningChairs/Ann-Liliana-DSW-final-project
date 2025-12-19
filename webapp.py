@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for, session, request, jsonify, render_te
 from markupsafe import Markup
 from flask_oauthlib.client import OAuth
 from bson.objectid import ObjectId
+from datetime import datetime, timedelta
 
 import pprint
 import os
@@ -45,23 +46,38 @@ try:
 except Exception as e:
     print(e)
     
+@app.route('/api/can_play')
+def can_play():
+    if not ('github_token' in session):
+        return jsonify({'can_play': False, 'reason': 'not_logged_in'})
+    user_id = session['user_data']['id']
+    user_doc = collection.find_one({'user_id': user_id})
+    now = datetime.utcnow()
+    if user_doc and 'last_play' in user_doc:
+        last_play = datetime.fromisoformat(user_doc['last_play'])
+        if now < last_play + timedelta(minutes=5):
+            time_left = (last_play + timedelta(minutes=5) - now).seconds #5 minutes for now
+            return jsonify({'can_play': False, 'reason': 'cooldown', 'seconds_left': time_left})
+    return jsonify({'can_play': True})
+
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
-	if 'secret_number' not in session:
-		session['secret_number'] = random.randint(0, 99)
+    if ('github_token' not in session):
+        return redirect(url_for('login'))
+        
+    if 'secret_number' not in session:
+        session['secret_number'] = random.randint(0, 99)
 		session['guesses_made'] = 0
 		session['guess_history'] = []
-		session['game_message'] = 'Pick a random number from 0 to 99, you have 6 guesses.'
-		
 	message = session.get('game_message', '')
 	history = session.get('guess_history', [])
 	guesses_made = session.get('guesses_made', 0)
-	guesses_left = 6 - guesses_made
-	
+	guesses_left = 6 - guesses_made	
+    
 	if request.method == 'POST' and guesses_left > 0:
-		try:
-			user_guess = int(request.form.get('user_input'))
-		except (TypeError, ValueError):
+	    try:
+	        user_guess = int(request.form.get('user_input'))
+	    except (TypeError, ValueError)
 			session['game_message'] = 'Invalid input. Try again'
 			message = session['game_message']
 			return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
@@ -76,6 +92,19 @@ def renderPage1():
 		
 		if user_guess == secret_number:
 			session['game_message'] = f'CORRECT The number was {secret_number}. Game over'
+		    
+		    user_id = session['user_data']['id']
+		    username = session['user_data']['login']
+		    collection.update_one(
+		        {'user_id': user_id},
+		        {
+		            '$set': {
+		                'last_play': datetime.datetime.utcnow().isoformat(),
+		                'username': username
+		            }
+		        },
+		        upsert=True
+		    )
 		
 		elif guesses_made >= 6:
 			session['game_message'] = f'GAME OVER The number was {secret_number}. Game over'
