@@ -34,9 +34,10 @@ function checkCanPlaySync() {
 }
 
 function showCooldown(seconds) {
-    var minutes = Math.floor(seconds / 60);
-    var secs = seconds % 60;
-    $('#game_message').text('Cooldown active: ${minutes}m ${secs}s remaining');
+    //var minutes = Math.floor(seconds / 60);
+    //var secs = seconds % 60;
+    //$('#game_message').text('Cooldown active: ${minutes}m ${secs}s remaining');
+    $('#game_message').text(Math.floor(seconds / 60) + 'minutes left');
     $('#user_input, button[type="submit"]').prop('disabled', true);
     
     var timer = setInterval(function() {
@@ -46,7 +47,7 @@ function showCooldown(seconds) {
             location.reload();
         } else {
             var m = Math.floor(seconds / 60);
-            var s = seconds % 60;
+            //var s = seconds % 60;
             $('#game_message').text('Cooldown: ${m}m ${s}s');
         }
     }, 1000);
