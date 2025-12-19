@@ -272,7 +272,7 @@ def renderPage2():
         return redirect(url_for('home'))
     
     return render_template('page2.html', user=user)
-    return render_template('page2.html')
+    #return render_template('page2.html')
  
 @app.route('/update_p')
 def update():
