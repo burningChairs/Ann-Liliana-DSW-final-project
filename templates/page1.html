@@ -8,15 +8,16 @@
   <h1>This is Page 1</h1>
   
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  
-  <script>
+  </script>
+  <script src="/static/script.js"></script>
+  <!-- <script>
       $(document).ready(function(){
           $("button").click(function(){
               $("#hello").load("/update_p");
           });
       });
   </script>
-
+-->
   <p>
     <strong>{{ message | safe }}</strong>
     {% if guesses_left is defined and guesses_left > 0 %}
