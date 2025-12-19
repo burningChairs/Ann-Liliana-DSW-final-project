@@ -6,8 +6,11 @@
 
 {% block content %}
 
-  <h1>This is Page 2</h1>
+  <h1>Scoreboard</h1>
+  <p>Username: {{ user.username }}</p>
+  <p>Current streak: {{ user.current_streak }} days</p>
+  <p>Longest streak: {{ user.longest_streak }} days</p>
 
-  <p>Lorem ipsum</p>
+
 
 {% endblock %}

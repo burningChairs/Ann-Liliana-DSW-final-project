@@ -62,58 +62,28 @@ def can_play():
 
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
-    if ('github_token' not in session):
-        return redirect(url_for('login'))
-     
-    if 'secret_number' not in session:
-        session['secret_number'] = random.randint(0, 99)
-        session['guesses_made'] = 0
-        session['guess_history'] = []
-    message = session.get('game_message', '')
-    history = session.get('guess_history', [])
-    guesses_made = session.get('guesses_made', 0)
-    guesses_left = 6 - guesses_made    
-    
-    if request.method == 'POST' and guesses_left > 0:
-        try:
-            user_guess = int(request.form.get('user_input'))
-        except (TypeError, ValueError):
-            session['game_message'] = 'Invalid input. Try again'
-            message = session['game_message']
-            return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
-    
-        guesses_made += 1
-        session['guesses_made'] = guesses_made
-        guesses_left = 6 - guesses_made
-        
-        secret_number = session['secret_number']
-        history.append(f'You guessed {user_guess}')
-        session['guess_history'] = history
-        
-        if user_guess == secret_number:
-            session['game_message'] = f'CORRECT The number was {secret_number}. Game over'
-            user_id = session['user_data']['id']
-            username = session['user_data']['login']
-            collection.update_one(
-                {'user_id': user_id},
-                {
-                    '$set': {
-                        'last_play': datetime.datetime.utcnow().isoformat(),
-                        'username': username
-                    }
-                },
-                upsert=True
-            )
-        elif guesses_made >= 6:
-            session['game_message'] = f'GAME OVER The number was {secret_number}. Game over'
-        elif user_guess < secret_number: #for now till we can change it to color variation rather that too close or too high
-            session['game_message'] = 'Too low'
-        else:
-            session['game_message'] = 'Too high'
-        message = session['game_message']
-        
-    return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
-        
+	if 'secret_number' not in session:
+		session['secret_number'] = random.randint(0, 99)
+		session['guess_made'] = 0
+		session['guess_history'] = []
+		session['game_message'] = 'pick a random integer from 0 to 00, you have 6 guesses.'
+		
+		if request.method == 'POST':
+		    try:
+			    user_guess = int(request.form.get('user_input'))
+		    except ValueError:
+			    session['game_message'] = 'Invalid input. Try again'
+			    return render_template('game.html', message=session['game_message'], history=session['guess_history'], guesses_left=6 - session['guesses_made'])
+
+		session['guesses_made'] +=1
+		guesses_left = 6 - session['guesses_made']
+		
+		if user_guess == session['secret_number']:
+			session['game_message'] = f"CORRECT The number was {session["secret_number"]}. Game over"
+
+		elif session['guesses_made'] >= 6:
+			session['game_message'] = f"GAME OVER The number was {session["secret_number"]}. Game over"
+			
 #def get_minute_specific_number(lower_bound, upper_bound):
     #"""
     #Generates a consistent number for the current minute using the minute 
@@ -167,25 +137,110 @@ def authorized():
     resp = github.authorized_response()
     if resp is None:
         session.clear()
-        flash('Access denied: reason=' + request.args['error'] + ' error=' + request.args['error_description'] + ' full=' + pprint.pformat(request.args), 'error')      
-    else:
-        try:
-            session['github_token'] = (resp['access_token'], '') #save the token to prove that the user logged in
-            session['user_data']=github.get('user').data
-            message = 'You were successfully logged in as ' + session['user_data']['login'] + '.'
-        except Exception as inst:
-            session.clear()
-            print(inst)
-            message = 'Unable to login, please try again.', 'error'
-    return render_template('message.html', message=message)
+        flash(
+            'Access denied: reason=' + request.args['error'] +
+            ' error=' + request.args['error_description'] +
+            ' full=' + pprint.pformat(request.args),
+            'error'
+        )
+        return redirect(url_for('home'))
+    try:
+        session['github_token'] = (resp['access_token'], '')
+        session['user_data'] = github.get('user').data
+        user = session['user_data']
 
+        github_id = user['id']
+        username = user['login']
+        avatar_url = user.get('avatar_url')
+        html_url = user.get('html_url')
+        email = user.get('email')
+        now = datetime.datetime.now(datetime.UTC)
 
-#@app.route('/page1')
-#def renderPage1():
-#    return render_template('page1.html')
+        existing = collection.find_one({"github_id": github_id})
+
+        if existing:
+            last_login = existing.get("last_login")
+            current_streak = existing.get("current_streak", 0)
+            longest_streak = existing.get("longest_streak", 0)
+
+            if last_login is not None:
+                delta_days = (now.date() - last_login.date()).days
+                if delta_days == 1:
+                    current_streak += 1
+                elif delta_days == 0:
+                    pass
+                else:
+                    current_streak = 1
+            else:
+                current_streak = 1
+
+            if current_streak > longest_streak:
+                longest_streak = current_streak
+
+            collection.update_one(
+                {"github_id": github_id},
+                {
+                    "$set": {
+                        "username": username,
+                        "avatar_url": avatar_url,
+                        "html_url": html_url,
+                        "email": email,
+                        "last_login": now,
+                        "current_streak": current_streak,
+                        "longest_streak": longest_streak,
+                    }
+                }
+            )
+        else:
+            current_streak = 1
+            longest_streak = 1
+            collection.insert_one(
+                {
+                    "github_id": github_id,
+                    "username": username,
+                    "avatar_url": avatar_url,
+                    "html_url": html_url,
+                    "email": email,
+                    "last_login": now,
+                    "current_streak": current_streak,
+                    "longest_streak": longest_streak,
+                }
+            )
+        message = 'You were successfully logged in as ' + username + '.'
+    except Exception as inst:
+        session.clear()
+        print(inst)
+        message = 'Unable to login, please try again.'
+        
+        
+    if 'github_token' not in session:
+        return redirect(url_for('home'))
+    username = session['user_data']['username']
+    user_posts = list(collection.find({"username": username}))
+    
+    userstuff = list(collection.find().sort("_id", -1))
+    for userinfo in userstuff:
+        userinfo['_id'] = str(userinfo['_id'])
+    
+    return render_template('message.html', message=message, userstuff=userstuff, username=username)
+
+# @app.route('/page1')
+# def renderPage1():
+#     return render_template('page1.html')
 
 @app.route('/page2')
 def renderPage2():
+    if 'user_data' not in session:
+        return redirect(url_for('home'))
+    
+    github_id = session['user_data']['id']
+    user = collection.find_one({"github_id": github_id})
+    
+    if not user:
+        flash("No user record found.")
+        return redirect(url_for('home'))
+    
+    return render_template('page2.html', user=user)
     return render_template('page2.html')
  
 @app.route('/update_p')
