@@ -246,7 +246,7 @@ def authorized():
         
     if 'github_token' not in session:
         return redirect(url_for('home'))
-    username = session['user_data']['username']
+    username = session['user_data']['login']
     user_posts = list(collection.find({"username": username}))
     
     userstuff = list(collection.find().sort("_id", -1))
@@ -259,8 +259,8 @@ def authorized():
 # def renderPage1():
 #     return render_template('page1.html')
 
-@app.route('/page2')
-def renderPage2():
+@app.route('/scoreboard')
+def renderScoreboard():
     if 'user_data' not in session:
         return redirect(url_for('home'))
     
@@ -271,7 +271,7 @@ def renderPage2():
         flash("No user record found.")
         return redirect(url_for('home'))
     
-    return render_template('page2.html', user=user)
+    return render_template('scoreboard.html', user=user)
     #return render_template('page2.html')
  
 @app.route('/update_p')
