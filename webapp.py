@@ -2,7 +2,8 @@ from flask import Flask, redirect, url_for, session, request, jsonify, render_te
 from markupsafe import Markup
 from flask_oauthlib.client import OAuth
 from bson.objectid import ObjectId
-from datetime import datetime, timedelta
+import datetime
+from datetime import timedelta
 
 import pprint
 import os
@@ -10,6 +11,7 @@ import random
 import pymongo
 import sys
 import datetime
+import pytz
  
 app = Flask(__name__)
 
@@ -51,68 +53,123 @@ def can_play():
     if not ('github_token' in session):
         return jsonify({'can_play': False, 'reason': 'not_logged_in'})
     user_id = session['user_data']['id']
-    user_doc = collection.find_one({'user_id': user_id})
-    now = datetime.utcnow()
-    if user_doc and 'last_play' in user_doc:
-        last_play = datetime.fromisoformat(user_doc['last_play'])
-        if now < last_play + timedelta(minutes=5):
-            time_left = (last_play + timedelta(minutes=5) - now).seconds #5 minutes for now
-            return jsonify({'can_play': False, 'reason': 'cooldown', 'seconds_left': time_left})
+    user_doc = collection.find_one({'github_id': user_id})
+    now = datetime.datetime.now(pytz.UTC).date()
+    if user_doc and 'last_play_date' in user_doc:
+        last_play_date = datetime.datetime.fromisoformat(user_doc['last_play_date']).date()
+        if now == last_play_date:
+            return jsonify({'can_play': False, 'reason': 'already_played_today'})
     return jsonify({'can_play': True})
 
 @app.route('/page1', methods=['GET', 'POST'])
 def renderPage1():
     if ('github_token' not in session):
         return redirect(url_for('login'))
-     
-    if 'secret_number' not in session:
-        session['secret_number'] = random.randint(0, 99)
-        session['guesses_made'] = 0
-        session['guess_history'] = []
-    message = session.get('game_message', '')
-    history = session.get('guess_history', [])
-    guesses_made = session.get('guesses_made', 0)
-    guesses_left = 6 - guesses_made    
+    user_id = session['user_data']['id']
+    username = session['user_data']['login']
+    
+    session.pop('secret_number', None)
+    session.pop('guesses_made', None)
+    session.pop('guess_history', None)
+    session.pop('game_message', None)
+    
+    #if they can play
+    user_doc = collection.find_one({'github_id': user_id})
+    now = datetime.datetime.now(pytz.UTC).date()
+    can_play = True
+    if user_doc and 'last_play_date' in user_doc:
+    	last_play_date = datetime.datetime.fromisoformat(user_doc['last_play_date']).date()
+    	if now == last_play_date:
+    	    can_play = False
+    if not can_play:
+        return render_template('page1.html', message="You've already played today! Check back tomorrow.", history=[], guesses_left=0)
+    today_game = collection.find_one({'github_id': user_id, 'game_date': now.isoformat()})
+    if not today_game:
+        secret_number = random.randint(0, 99)
+        guesses_made = 0
+        guess_history = []
+        game_message = 'Guess the number from 0 to 99! you have 6 attempts' 
+    
+        #save new game
+        collection.update_one(
+            {'github_id': user_id},
+            {
+                '$set': {
+                    'game_date': now.isoformat(),
+                    'secret_number': secret_number,
+                    'guesses_made': 0,
+                    'guess_history': [],
+                    'game_active': True
+                }
+            },
+            upsert=True
+        )
+    else:
+        secret_number = today_game['secret_number']
+        guesses_made = today_game['guesses_made']
+        guess_history = today_game['guess_history']
+        game_message = today_game.get('game_message', 'Guess the number from 0 to 99!')
+    
+    guesses_left = 6 - guesses_made
+    history = guess_history.copy()
     
     if request.method == 'POST' and guesses_left > 0:
         try:
             user_guess = int(request.form.get('user_input'))
         except (TypeError, ValueError):
-            session['game_message'] = 'Invalid input. Try again'
-            message = session['game_message']
-            return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
+            game_message = 'Invalid input. Try again'
+            collection.update_one(
+                {'github_id': user_id, 'game_date': now.isoformat()},
+                {'$set': {'game_message': game_message}}
+            )
+            return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
     
         guesses_made += 1
-        session['guesses_made'] = guesses_made
         guesses_left = 6 - guesses_made
-        
-        secret_number = session['secret_number']
-        history.append(f'You guessed {user_guess}')
-        session['guess_history'] = history
+        history.append(f'You guesses {user_guess}')
         
         if user_guess == secret_number:
-            session['game_message'] = f'CORRECT The number was {secret_number}. Game over'
-            user_id = session['user_data']['id']
-            username = session['user_data']['login']
+            game_message = f'CORRECT The number was {secret_number}. Game over'
             collection.update_one(
-                {'user_id': user_id},
-                {
-                    '$set': {
-                        'last_play': datetime.datetime.utcnow().isoformat(),
-                        'username': username
-                    }
-                },
+                {'github_id': user_id},
+                {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made}},
                 upsert=True
             )
+            daily_scores = db['daily_scores']
+            daily_scores.insert_one({
+                'github_id': user_id,
+                'username': username,
+                'date': now.isoformat(),
+                'guesses': guesses_made,
+                'won': True
+            })
+            
         elif guesses_made >= 6:
-            session['game_message'] = f'GAME OVER The number was {secret_number}. Game over'
-        elif user_guess < secret_number: #for now till we can change it to color variation rather that too close or too high
-            session['game_message'] = 'Too low'
+            game_message = f'GAME OVER! The number was {secret_number}'
+            collection.update_one(
+                {'github_id': user_id},
+                {'$set': {'last_play_date': now.isoformat()}},
+                upsert=True
+            )
+            daily_scores = db['daily_scores']
+            daily_scores.insert_one({
+                'github_id': user_id,
+                'username': username,
+                'date': now.isoformat(),
+                'guesses': guesses_made,
+                'won': False
+            })
+        elif user_guess < secret_number:
+            game_message = 'Too low'
         else:
-            session['game_message'] = 'Too high'
-        message = session['game_message']
+            game_message = 'Too high'
+            
+        collection.update_one(
+            {'github_id': user_id, 'game_date': now.isoformat()},
+            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0}}
+        )
         
-    return render_template('page1.html', message=message, history=history, guesses_left=guesses_left)
+    return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
 
 			
 #def get_minute_specific_number(lower_bound, upper_bound):
@@ -185,7 +242,7 @@ def authorized():
         avatar_url = user.get('avatar_url')
         html_url = user.get('html_url')
         email = user.get('email')
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(pytz.UTC)
 
         existing = collection.find_one({"github_id": github_id})
 
@@ -243,10 +300,10 @@ def authorized():
         print(inst)
         message = 'Unable to login, please try again.'
         
-        
+      
     if 'github_token' not in session:
         return redirect(url_for('home'))
-    username = session['user_data']['username']
+    username = session['user_data']['login']
     user_posts = list(collection.find({"username": username}))
     
     userstuff = list(collection.find().sort("_id", -1))
@@ -271,6 +328,8 @@ def renderPage2():
         flash("No user record found.")
         return redirect(url_for('home'))
     
+    if user :
+        user['_id'] = str(user['_id'])
     return render_template('page2.html', user=user)
     #return render_template('page2.html')
  
