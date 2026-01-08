@@ -7,24 +7,17 @@
 {% block content %}
   <h1>This is Page 1</h1>
   
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <!-- ><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   </script>
+  -->
   <script src="/static/script.js"></script>
-  <!-- <script>
-      $(document).ready(function(){
-          $("button").click(function(){
-              $("#hello").load("/update_p");
-          });
-      });
-  </script>
--->
-  <div id="game_mesage"></div>
-  <p id="game_message">
+  
+  <div id="game_message">
     <strong>{{ message | safe }}</strong>
     {% if guesses_left is defined and guesses_left > 0 %}
 	  You have <strong>{{ guesses_left }}</strong> guesses left.
 	{% endif %}
-  </p>
+  </div>
   
   {% if 'CORRECT' not in message and 'GAME OVER' not in message %}
     <form action="/page1" method="POST">

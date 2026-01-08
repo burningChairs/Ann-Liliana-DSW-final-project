@@ -15,7 +15,7 @@ function checkCanPlay() {
             if (data.reason === 'not_logged_in'){
                 window.location.href = '/login';
             } else {
-                showCooldown(data.sounds_left);
+                showCooldown(data.seconds_left);
             }
         }
     });
@@ -26,8 +26,12 @@ function checkCanPlaySync() {
     $.ajax({
         url: '/api/can_play',
         async: false,
+        dataType: 'json',
+        error: function() {
+            canPlay = false
+        },
         success: function(data) {
-            canPlay = data.can_play;
+            canPlay = data.can_play || false;
         }
     });
     return canPlay;
@@ -47,8 +51,8 @@ function showCooldown(seconds) {
             location.reload();
         } else {
             var m = Math.floor(seconds / 60);
-            //var s = seconds % 60;
-            $('#game_message').text('Cooldown: ${m}m ${s}s');
+            var s = seconds % 60;
+            $('#game_message').text(`Cooldown: ${m}m ${s}s`);
         }
     }, 1000);
 }
