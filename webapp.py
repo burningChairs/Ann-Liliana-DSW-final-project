@@ -316,8 +316,8 @@ def authorized():
 # def renderPage1():
 #     return render_template('page1.html')
 
-@app.route('/page2')
-def renderPage2():
+@app.route('/scoreboard')
+def renderScoreboard():
     if 'user_data' not in session:
         return redirect(url_for('home'))
     
@@ -328,9 +328,13 @@ def renderPage2():
         flash("No user record found.")
         return redirect(url_for('home'))
     
+<<<<<<< HEAD
+    return render_template('scoreboard.html', user=user)
+=======
     if user :
         user['_id'] = str(user['_id'])
     return render_template('page2.html', user=user)
+>>>>>>> 96901c584508f32bf4f6884f8072214ec736bc2a
     #return render_template('page2.html')
  
 @app.route('/update_p')

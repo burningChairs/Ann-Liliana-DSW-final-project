@@ -11,13 +11,14 @@
         </li>
         
         <li class="nav-item">
-	  		<a {% if active_page == "page2" %} class="nav-link active"{% else %}class="nav-link"{% endif %} href="/page2">Page 2</a>
+	  		<a {% if active_page == "scoreboard" %} class="nav-link active"{% else %}class="nav-link"{% endif %} href="/scoreboard">Scoreboard</a>
         </li>
         {% endif %}
       </ul>
       <ul class="navbar-nav">
+
     	{% if logged_in %}
-	    	<li><span class="navbar-text">Github userid: {{ session['user_data']['login']}}</span></li>
+	    	<li class="navbar-text">Github userid: {{ session['user_data']['login']}}</li>
 	    	<li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
 		{% else %}
 	    	<li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
