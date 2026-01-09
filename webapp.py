@@ -202,7 +202,7 @@ def renderPage1():
         
     return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
 
-			
+@app.context_processor
 def inject_logged_in():
     return {"logged_in":('github_token' in session)}
 
