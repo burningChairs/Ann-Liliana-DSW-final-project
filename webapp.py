@@ -187,9 +187,14 @@ def renderPage1():
             game_message = 'Too high'
             history.append(f'You guessed {user_guess}: Too high')
             
+        #if game_message == f'CORRECT The number was {secret_number}. Game over':
+            #g_message = f'Won'
+        #else:
+             #g_message = f'Lost'
+             
         collection.update_one(
             {'github_id': user_id, 'game_date': now.isoformat()},
-            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0}}
+            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0, 'db': daily_scores}}
         )
         
     return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
