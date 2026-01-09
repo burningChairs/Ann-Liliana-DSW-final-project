@@ -11,6 +11,20 @@
   <p>Username: {{ user.username }}</p>
   <p>Current streak: {{ user.current_streak }} days</p>
   <p>Longest streak: {{ user.longest_streak }} days</p>
+  
+  <br>
+  {% if user.game_active == False %}
+  <p>On {{ user.game_date }}, it took you {{ user.guesses_made }} guesses.</p>
+  <p>The secret number was {{ user.secret_number }}.</p>
+  
+  {% if user.won == True %} 
+  <p>You won!</p>
+  {% elif user.won == False %}
+  <p>You lost.</p>
+  {% endif %}
+    
+  {% endif %}
+
 
 </div>
 {% endblock %}

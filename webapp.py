@@ -99,16 +99,19 @@ def renderPage1():
                     'secret_number': secret_number,
                     'guesses_made': 0,
                     'guess_history': [],
-                    'game_active': True
+                    'game_active': True,
+                    'won': False
                 }
             },
-            upsert=True
         )
+        upsert=True
+
     else:
         secret_number = today_game['secret_number']
         guesses_made = today_game['guesses_made']
         guess_history = today_game['guess_history']
         game_message = today_game.get('game_message', 'Guess the number from 0 to 99!')
+    
     
     guesses_left = 6 - guesses_made
     history = guess_history.copy()
@@ -127,9 +130,11 @@ def renderPage1():
         guesses_made += 1
         guesses_left = 6 - guesses_made
         history.append(f'You guesses {user_guess}')
+        won = False
         
         if user_guess == secret_number:
             game_message = f'CORRECT The number was {secret_number}. Game over'
+            won = True
             collection.update_one(
                 {'github_id': user_id},
                 {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made}},
@@ -146,6 +151,7 @@ def renderPage1():
             
         elif guesses_made >= 6:
             game_message = f'GAME OVER! The number was {secret_number}'
+            won = False
             collection.update_one(
                 {'github_id': user_id},
                 {'$set': {'last_play_date': now.isoformat()}},
@@ -166,7 +172,7 @@ def renderPage1():
             
         collection.update_one(
             {'github_id': user_id, 'game_date': now.isoformat()},
-            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0}}
+            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0, 'won': won }}
         )
         
     return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
