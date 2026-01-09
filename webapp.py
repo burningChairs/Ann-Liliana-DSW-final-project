@@ -140,36 +140,62 @@ def renderPage1():
                 {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made}},
                 upsert=True
             )
-            daily_scores = db['daily_scores']
-            daily_scores.insert_one({
+            
+            db['daily_scores'].insert_one({
                 'github_id': user_id,
                 'username': username,
                 'date': now.isoformat(),
                 'guesses': guesses_made,
                 'won': True
             })
+            #daily_scores = db['daily_scores']
+            #daily_scores.insert_one({
+                #'github_id': user_id,
+                #'username': username,
+                #'date': now.isoformat(),
+                #'guesses': guesses_made,
+                #'won': True
+            #})
             
         elif guesses_made >= 6:
             game_message = f'GAME OVER! The number was {secret_number}'
+            history.append(f'You guessed {user_guess}: Game Over')
+            
             won = False
             collection.update_one(
                 {'github_id': user_id},
                 {'$set': {'last_play_date': now.isoformat()}},
                 upsert=True
             )
-            daily_scores = db['daily_scores']
-            daily_scores.insert_one({
+            db['daily_scores'].insert_one({
                 'github_id': user_id,
                 'username': username,
                 'date': now.isoformat(),
                 'guesses': guesses_made,
-                'won': False
+                'won': True
             })
+            #daily_scores = db['daily_scores']
+            #daily_scores.insert_one({
+                #'github_id': user_id,
+                #'username': username,
+                #'date': now.isoformat(),
+                #'guesses': guesses_made,
+                #'won': False
+            #})
+            
+            
         elif user_guess < secret_number:
             game_message = 'Too low'
+            history.append(f'You guessed {user_guess}: Too low')
         else:
             game_message = 'Too high'
+            history.append(f'You guessed {user_guess}: Too high')
             
+        #if game_message == f'CORRECT The number was {secret_number}. Game over':
+            #g_message = f'Won'
+        #else:
+             #g_message = f'Lost'
+             
         collection.update_one(
             {'github_id': user_id, 'game_date': now.isoformat()},
             {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0, 'won': won }}
