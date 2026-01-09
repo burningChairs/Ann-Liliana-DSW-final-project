@@ -129,7 +129,6 @@ def renderPage1():
     
         guesses_made += 1
         guesses_left = 6 - guesses_made
-        history.append(f'You guesses {user_guess}')
         won = False
         
         if user_guess == secret_number:
@@ -204,36 +203,6 @@ def renderPage1():
     return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
 
 			
-#def get_minute_specific_number(lower_bound, upper_bound):
-    #"""
-    #Generates a consistent number for the current minute using the minute 
-    #of the hour as the random seed.
-    #"""
-    # 1. Get the current time.
-    #now = datetime.datetime.now()
-    
-    # 2. Extract the current minute (an integer between 0 and 59).
-    #current_minute = now.minute
-    
-    # 3. Use the minute as the seed for the random number generator.
-    # Seeding ensures the number generated is the same for the entire minute.
-    #random.seed(current_minute)
-    
-    # 4. Generate the "random" number within the specified range.
-    # Use randint for inclusive range.
-    #result = random.randint(lower_bound, upper_bound)
-    
-    #return result
-
-## Generate a number between 1 and 100 that is the same for the current minute.
-#number = get_minute_specific_number(1, 100)
-#print(f"The consistent number for this minute is: {number}")
-
-
-#context processors run before templates are rendered and add variable(s) to the template's context
-#context processors must return a dictionary 
-#this context processor adds the variable logged_in to the conext for all templates
-@app.context_processor
 def inject_logged_in():
     return {"logged_in":('github_token' in session)}
 
