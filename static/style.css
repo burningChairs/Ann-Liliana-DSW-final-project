@@ -6,7 +6,7 @@ input:disabled, button:disabled {
     cursor: not-allowed;
 }
 
-h4#example1 {
+p#example1 {
     font-size: 15px;
     background-color: #fc796f;
     border: 4px solid #fc1d0d;
@@ -16,7 +16,7 @@ h4#example1 {
     width: 30%;
 }
 
-h4#example2 {
+p#example2 {
     font-size: 15px;
     background-color: #fcf5a4;
     border: 4px solid #fae60a;
@@ -26,7 +26,7 @@ h4#example2 {
     width: 30%;
 }
 
-h4#example3 {
+p#example3 {
     font-size: 15px;
     background-color: #a8faa5;
     border: 4px solid #12d90b;
@@ -34,6 +34,24 @@ h4#example3 {
     padding: 1em;
     text-align: center;
     width: 30%;
+}
+
+h4#two {
+	text-decoration-line: underline;
+	text-decoration-color: #fc1d0d;
+	text-decoration-style: double;
+}
+
+h4#ninetythree {
+	text-decoration-line: underline;
+	text-decoration-color: #fae60a;
+	text-decoration-style: double;
+}
+
+h4#eightyfour{
+	text-decoration-line: underline;
+	text-decoration-color: #12d90b;
+	text-decoration-style: double;
 }
 
 div#homepage {
