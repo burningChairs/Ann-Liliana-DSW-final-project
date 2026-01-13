@@ -15,7 +15,7 @@ import pytz
  
 app = Flask(__name__)
 
-app.debug = False #Change this to False for production
+app.debug = True #Change this to False for production
 #os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' #Remove once done debugging
 
 app.secret_key = os.environ['SECRET_KEY'] #used to sign session cookies
@@ -65,141 +65,146 @@ def can_play():
 def renderPage1():
     if ('github_token' not in session):
         return redirect(url_for('login'))
+        
     user_id = session['user_data']['id']
     username = session['user_data']['login']
+    
+    user_guess = None
+    secret_number = None
+    won = False
+    game_message = ''
+    guesses_made = 0
+    history = []
+    guesses_left = 6
+    message = 'guess the number from 0 to 99! You have 6 attempts'
     
     session.pop('secret_number', None)
     session.pop('guesses_made', None)
     session.pop('guess_history', None)
     session.pop('game_message', None)
     
-    #if they can play
-    user_doc = collection.find_one({'github_id': user_id})
     now = datetime.datetime.now(pytz.UTC).date()
-    can_play = True
+    
+    #if already played today
+    user_doc = collection.find_one({'github_id': user_id})
+    finished_today = False
     if user_doc and 'last_play_date' in user_doc:
     	last_play_date = datetime.datetime.fromisoformat(user_doc['last_play_date']).date()
     	if now == last_play_date:
-    	    can_play = False
-    if not can_play:
-        return render_template('page1.html', message="You've already played today! Check back tomorrow.", history=[], guesses_left=0)
+    	    finished_today = True
+    	    
     today_game = collection.find_one({'github_id': user_id, 'game_date': now.isoformat()})
+    
+    if finished_today:
+        today_game = collection.find_one({'github_id': user_id, 'game_date': now.isoformat()})
+        score_doc = db['daily_scores'].find_one({'github_id': user_id, 'date': now.isoformat()})
+        
+        if score_doc:
+            tries = score_doc.get('guesses', 0)
+            won_flag = score_doc.get('won', False)
+            secret_number = today_game.get('secret_number', 'uknown')
+            message = f"You've already played today. You {'won' if won_flag else 'lost'}! The number was {secret_number}. You took {tries} {'try' if tries == 1 else 'tries'}."
+        else:
+            message = f"You've already played today. Check back tomorrow."
+        
+        history = today_game.get('guess_history', []) if today_game else []
+        return render_template('page1.html', message=message, history=[], guesses_left=0)
+     
+    #elif user_guess == secret_number:
+        #game_message = f'CORRECT! the number was {secret_number}.Game over'
+        #won = True  
+     
     if not today_game:
         secret_number = random.randint(0, 99)
         guesses_made = 0
-        guess_history = []
-        game_message = 'Guess the number from 0 to 99! you have 6 attempts' 
-    
-        #save new game
+        history = []
+        message = 'Guess the number from 0 to 99! you have 6 attempts' 
         collection.update_one(
             {'github_id': user_id},
-            {
-                '$set': {
-                    'game_date': now.isoformat(),
-                    'secret_number': secret_number,
-                    'guesses_made': 0,
-                    'guess_history': [],
-                    'game_active': True,
-                    'won': False
-                }
-            },
+            {'$set': {
+                'game_date': now.isoformat(),
+                'secret_number': secret_number,
+                'guesses_made': 0,
+                'guess_history': [],
+                'game_message': message,
+                'game_active': True,
+                'won': False
+            }},
+            upsert=True
         )
-        upsert=True
-
     else:
         secret_number = today_game['secret_number']
         guesses_made = today_game['guesses_made']
-        guess_history = today_game['guess_history']
+        history = today_game['guess_history']
         game_message = today_game.get('game_message', 'Guess the number from 0 to 99!')
     
-    
     guesses_left = 6 - guesses_made
-    history = guess_history.copy()
     
     if request.method == 'POST' and guesses_left > 0:
         try:
             user_guess = int(request.form.get('user_input'))
         except (TypeError, ValueError):
-            game_message = 'Invalid input. Try again'
+            message = 'Invalid input. Try again'
+            #collection.update_one(
+                #{'github_id': user_id, 'game_date': now.isoformat()},
+                #{'$set': {'game_message': game_message}}
+            #)
+        else:
+            guesses_made += 1
+            guesses_left = 6 - guesses_made
+            won = False
+        
+            if user_guess == secret_number:
+                game_message = f'CORRECT The number was {secret_number}. Game over'
+                won = True
+                collection.update_one(
+                    {'github_id': user_id},
+                    {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made}},
+                    upsert=True
+                )
+            
+                db['daily_scores'].insert_one({
+                    'github_id': user_id,
+                    'username': username,
+                    'date': now.isoformat(),
+                    'guesses': guesses_made,
+                    'won': True
+                })
+            
+            elif guesses_made >= 6:
+                message = f'GAME OVER! The number was {secret_number}'
+                history.append(f'You guessed {user_guess}: Game Over')
+                collection.update_one(
+                    {'github_id': user_id},
+                    {'$set': {'last_play_date': now.isoformat()}},
+                    upsert=True
+                )
+                db['daily_scores'].insert_one({
+                    'github_id': user_id,
+                    'username': username,
+                    'date': now.isoformat(),
+                    'guesses': guesses_made,
+                    'won': False
+                })
+            
+            elif user_guess < secret_number:
+                message = 'Too low'
+                history.append(f'You guessed {user_guess}: Too low')
+            else:
+                message = 'Too high'
+                history.append(f'You guessed {user_guess}: Too high')
+             
             collection.update_one(
                 {'github_id': user_id, 'game_date': now.isoformat()},
-                {'$set': {'game_message': game_message}}
+                {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': message, 'game_active': guesses_left > 0, 'won': won }}
             )
-            return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
-    
-        guesses_made += 1
-        guesses_left = 6 - guesses_made
-        won = False
         
-        if user_guess == secret_number:
-            game_message = f'CORRECT The number was {secret_number}. Game over'
-            won = True
-            collection.update_one(
-                {'github_id': user_id},
-                {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made}},
-                upsert=True
-            )
+            today_game = collection.find_one({'github_id': user_id, 'game_date': now.isoformat()})
+            if today_game:
+                history = today_game['guess_history']
+                message = today_game.get('game_message', message)
+                guesses_left = 6 - today_game['guesses_made']
             
-            db['daily_scores'].insert_one({
-                'github_id': user_id,
-                'username': username,
-                'date': now.isoformat(),
-                'guesses': guesses_made,
-                'won': True
-            })
-            #daily_scores = db['daily_scores']
-            #daily_scores.insert_one({
-                #'github_id': user_id,
-                #'username': username,
-                #'date': now.isoformat(),
-                #'guesses': guesses_made,
-                #'won': True
-            #})
-            
-        elif guesses_made >= 6:
-            game_message = f'GAME OVER! The number was {secret_number}'
-            history.append(f'You guessed {user_guess}: Game Over')
-            
-            won = False
-            collection.update_one(
-                {'github_id': user_id},
-                {'$set': {'last_play_date': now.isoformat()}},
-                upsert=True
-            )
-            db['daily_scores'].insert_one({
-                'github_id': user_id,
-                'username': username,
-                'date': now.isoformat(),
-                'guesses': guesses_made,
-                'won': True
-            })
-            #daily_scores = db['daily_scores']
-            #daily_scores.insert_one({
-                #'github_id': user_id,
-                #'username': username,
-                #'date': now.isoformat(),
-                #'guesses': guesses_made,
-                #'won': False
-            #})
-            
-            
-        elif user_guess < secret_number:
-            game_message = 'Too low'
-            history.append(f'You guessed {user_guess}: Too low')
-        else:
-            game_message = 'Too high'
-            history.append(f'You guessed {user_guess}: Too high')
-            
-        #if game_message == f'CORRECT The number was {secret_number}. Game over':
-            #g_message = f'Won'
-        #else:
-             #g_message = f'Lost'
-             
-        collection.update_one(
-            {'github_id': user_id, 'game_date': now.isoformat()},
-            {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': game_message, 'game_active': guesses_left > 0, 'won': won }}
-        )
-        
     return render_template('page1.html', message=game_message, history=history, guesses_left=guesses_left)
 
 @app.context_processor
