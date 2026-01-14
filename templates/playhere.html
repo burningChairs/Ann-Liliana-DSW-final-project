@@ -14,7 +14,7 @@
   
   <div id="game_message">
     <strong>{{ message | safe }}</strong>
-    {% if guesses_left is defined and guesses_left > 0 %}
+    {% if guesses_left is defined and guesses_left > 0 and won != True %}
 	  You have <strong>{{ guesses_left }}</strong> guesses left.
 	{% endif %}
   </div>
