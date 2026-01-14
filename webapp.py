@@ -108,16 +108,12 @@ def renderPlayhere():
             message = f"You've already played today. Check back tomorrow."
         
         history = today_game.get('guess_history', []) if today_game else []
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
         return render_template('playhere.html', message=message, history=[], guesses_left=0)
-=======
-=======
->>>>>>> Stashed changes
+
         game_message = message
         guesses_left = 0
         return render_template('page1.html', message=message, history=[], guesses_left=0)
->>>>>>> Stashed changes
      
     #elif user_guess == secret_number:
         #game_message = f'CORRECT! the number was {secret_number}.Game over'
@@ -166,15 +162,9 @@ def renderPlayhere():
             if user_guess == secret_number:
                 message = f'CORRECT The number was {secret_number}. Game over'
                 won = True
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                
-=======
+
                 gusses_left = 0
->>>>>>> Stashed changes
-=======
-                gusses_left = 0
->>>>>>> Stashed changes
+
                 collection.update_one(
                     {'github_id': user_id},
                     {'$set': {'last_play_date': now.isoformat(), 'last_score': guesses_made, 'game_active': False, 'won': True}},
@@ -213,16 +203,10 @@ def renderPlayhere():
                 history.append(f'You guessed {user_guess}: Too high')
              
             collection.update_one(
-<<<<<<< Updated upstream
-                {'github_id': user_id,},
-                {'$set': {'game_date': now.isoformat(), 'guesses_made': guesses_made, 'guess_history': history, 'game_message': message, 'game_active': guesses_left > 0 and not won, 'won': won }}
-=======
+
                 {'github_id': user_id, 'game_date': now.isoformat()},
                 {'$set': {'guesses_made': guesses_made, 'guess_history': history, 'game_message': message, 'won': won }}
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
             )
         
             today_game = collection.find_one({'github_id': user_id, 'game_date': now.isoformat()})
