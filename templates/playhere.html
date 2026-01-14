@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
-{% set active_page = "page1" %}
+{% set active_page = "playhere" %}
 
-{% block title %}page1{% endblock %}
+{% block title %}Play Here{% endblock %}
 
 {% block content %}
-  <h1>Daily Number game</h1>
+  <h1>Number Guess!</h1>
   
   <!-- ><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   </script>
@@ -20,7 +20,7 @@
   </div>
   
   {% if 'correct!' not in message|lower and 'game over' not in message|lower %}
-    <form action="/page1" method="POST">
+    <form action="/playhere" method="POST">
       <label for="user_input">Enter your guess (0 to 99):</label>
       <input type="number" id="user_input" name="user_input" min="0" max="99" required autofocus>
       <button type="submit">Send</button>
