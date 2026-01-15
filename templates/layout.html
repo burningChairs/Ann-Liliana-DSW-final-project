@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>{% block title %}{% endblock %} - My Webpage</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400&family=Metal+Mania&display=swap" rel="stylesheet">
 
   </head>
   <body>
@@ -35,6 +36,15 @@
     <div id="content">
       {% block content %}{% endblock %}
     </div>
+    
+    <footer>
+      <!-- ><img src="static/images/catheadphones.webp" alt="Kitten with Headphones" id="center-image"> -->
+      <img src="{{ url_for('static', filename='images/catheadphones.webp') }}" alt="Kitten with Headphones" id="center-image">
+ 	  <br>
+ 	  <p>
+  		<a href="https://www.etsy.com/listing/1708980716/cat-with-headphones-sticker-radiohead"target="_blank"class="custom-link" id="center-image"><small>Image by AnimmartShop</small> </a>
+	  </p>
+    </footer>
 
   </body>
 </html>
