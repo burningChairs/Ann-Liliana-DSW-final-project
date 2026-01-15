@@ -89,10 +89,10 @@ def renderPlayhere():
     user_doc = collection.find_one({'github_id': user_id})
     finished_today = False
     
-    print(request.form.get('user_input'))
+    #print(request.form.get('user_input'))
     #user_guess = int(request.form.get('user_input'))
-    print(secret_number)
-    print(user_guess)
+    #print(secret_number)
+    #print(user_guess)
     
     if user_doc and 'last_play_date' in user_doc:
     	last_play_date = datetime.datetime.fromisoformat(user_doc['last_play_date']).date()
@@ -151,9 +151,9 @@ def renderPlayhere():
     
     guesses_left = 6 - guesses_made
     
-    user_guess = int(request.form.get('user_input'))
-    print(secret_number)
-    print(user_guess)
+    #user_guess = int(request.form.get('user_input'))
+    #print(secret_number)
+    #print(user_guess)
     
     if request.method == 'POST' and guesses_left > 0:
         try:
