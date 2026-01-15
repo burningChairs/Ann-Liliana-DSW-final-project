@@ -72,16 +72,15 @@ def renderPlayhere():
     user_guess = None
     secret_number = None
     won = False
-    game_message = ''
+    message = 'Guess the number from 0 to 99! You have 6 attempts'
     guesses_made = 0
     history = []
     guesses_left = 6
-    message = 'guess the number from 0 to 99! You have 6 attempts'
     
-    session.pop('secret_number', None)
-    session.pop('guesses_made', None)
-    session.pop('guess_history', None)
-    session.pop('game_message', None)
+#     session.pop('secret_number', None)
+#     session.pop('guesses_made', None)
+#     session.pop('guess_history', None)
+#     session.pop('game_message', None)
     
     now = datetime.datetime.now(pytz.UTC).date()
     
@@ -108,7 +107,7 @@ def renderPlayhere():
         if score_doc:
             tries = score_doc.get('guesses', 0)
             won_flag = score_doc.get('won', False)
-            secret_number = today_game.get('secret_number', 'uknown')
+            secret_number = today_game.get('secret_number', 'unknown')
             message = f"You've already played today. You {'won' if won_flag else 'lost'}! The number was {secret_number}. You took {tries} {'try' if tries == 1 else 'tries'}."
         else:
             message = f"You've already played today. Check back tomorrow."
@@ -117,9 +116,6 @@ def renderPlayhere():
 
         return render_template('playhere.html', message=message, history=[], guesses_left=0)
 
-        game_message = message
-        guesses_left = 0
-        return render_template('page1.html', message=message, history=[], guesses_left=0)
      
     #elif user_guess == secret_number:
         #game_message = f'CORRECT! the number was {secret_number}.Game over'
@@ -147,7 +143,7 @@ def renderPlayhere():
         secret_number = today_game['secret_number']
         guesses_made = today_game['guesses_made']
         history = today_game['guess_history']
-        game_message = today_game.get('game_message', 'Guess the number from 0 to 99!')
+        message = today_game.get('game_message', 'Guess the number from 0 to 99!')
     
     guesses_left = 6 - guesses_made
     
@@ -173,7 +169,7 @@ def renderPlayhere():
                 message = f'CORRECT The number was {secret_number}. Game over'
                 won = True
 
-                gusses_left = 0
+                guesses_left = 0
 
                 collection.update_one(
                     {'github_id': user_id},
@@ -224,8 +220,9 @@ def renderPlayhere():
                 history = today_game['guess_history']
                 message = today_game.get('game_message', message)
                 guesses_left = 6 - today_game['guesses_made']
+                won = today_game.get('won', won)
             
-    return render_template('playhere.html', message=game_message, history=history, guesses_left=guesses_left)
+    return render_template('playhere.html', message=message, history=history, guesses_left=guesses_left, won=won)
 
 @app.context_processor
 def inject_logged_in():
