@@ -88,6 +88,12 @@ def renderPlayhere():
     #if already played today
     user_doc = collection.find_one({'github_id': user_id})
     finished_today = False
+    
+    print(request.form.get('user_input'))
+    #user_guess = int(request.form.get('user_input'))
+    print(secret_number)
+    print(user_guess)
+    
     if user_doc and 'last_play_date' in user_doc:
     	last_play_date = datetime.datetime.fromisoformat(user_doc['last_play_date']).date()
     	if now == last_play_date:
@@ -144,6 +150,10 @@ def renderPlayhere():
         game_message = today_game.get('game_message', 'Guess the number from 0 to 99!')
     
     guesses_left = 6 - guesses_made
+    
+    user_guess = int(request.form.get('user_input'))
+    print(secret_number)
+    print(user_guess)
     
     if request.method == 'POST' and guesses_left > 0:
         try:
