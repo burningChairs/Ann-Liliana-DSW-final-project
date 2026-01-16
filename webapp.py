@@ -116,7 +116,7 @@ def renderPlayhere():
             tries = score_doc.get('guesses', 0)
             won_flag = score_doc.get('won', False)
             secret_number = today_game.get('secret_number', 'unknown')
-            message = f"You've already played today. You {'won' if won_flag else 'lost'}! The number was {secret_number}. You took {tries} {'try' if tries == 1 else 'tries'}."
+            message = f"You've already played today. You {'won' if won_flag else 'lost'}! The number was {secret_number}."
         else:
             message = f"You've already played today. Check back tomorrow."
         
