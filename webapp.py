@@ -1,3 +1,11 @@
+#https://www.google.com/search?q=what+does+%7C+lower+do+in+html
+#https://www.google.com/search?q=what+does+%22%7C+safe%22+do+in+html
+#https://www.google.com/search?q=session.pop+in+python
+#https://www.google.com/search?q=using+a+database+in+python
+#https://www.google.com/search?q=elif+statements+in+python
+#https://www.google.com/search?q=else+if+statements+in+python
+#https://www.google.com/search?q=how+to+add+mongodb+variables+in+python
+
 from flask import Flask, redirect, url_for, session, request, jsonify, render_template, flash
 from markupsafe import Markup
 from flask_oauthlib.client import OAuth
